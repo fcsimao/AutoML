@@ -1,11 +1,12 @@
-# 📊 AutoML para Predição de Evasão Escolar
+# 📊 AutoML e Active Learning para Predição de Evasão Escolar
 
-Este projeto oferece uma aplicação completa de aprendizado de máquina automatizado (AutoML) para prever evasão escolar. Desenvolvido com Python e integrado com Streamlit, o sistema utiliza diversas técnicas avançadas de balanceamento, otimização de hiperparâmetros e análise de fairness para gerar insights claros e acionáveis.
+Este projeto oferece uma aplicação completa que combina aprendizado de máquina automatizado (AutoML) e aprendizado ativo (Active Learning) para prever evasão escolar. Desenvolvido com Python e integrado com Streamlit, o sistema utiliza técnicas avançadas de balanceamento, otimização de hiperparâmetros e análise de fairness, além de estratégias eficientes de aprendizado ativo para gerar insights claros e acionáveis.
 
 ---
 
 ## 🚀 Funcionalidades
 
+### Pipeline de AutoML
 - **Carregamento de Dados:** Upload simples de arquivos CSV.
 - **Pré-processamento:** Escalonamento e balanceamento automático dos dados.
 - **Balanceamento de Dados:**
@@ -36,6 +37,22 @@ Este projeto oferece uma aplicação completa de aprendizado de máquina automat
 - **Análise de Fairness:**
   - Demographic Parity
   - Equalized Odds
+
+### Pipeline de Active Learning
+- **Redução de Rótulos:** Uso parcial dos dados rotulados.
+- **Oversampling:** Aplicado aos dados rotulados iniciais.
+- **Estratégias de Seleção:**
+  - Entropia
+  - Margem
+  - Aleatória
+  - Query by Committee
+- **Re-otimização Contínua de Hiperparâmetros:** Optuna e Random Search.
+- **Avaliação Contínua:** Validação cruzada interna em cada iteração.
+- **Visualização e Interpretabilidade:**
+  - Evolução das métricas durante o aprendizado ativo
+  - Curvas ROC e Precision-Recall
+  - Matrizes de Confusão
+  - Importância das Features
 
 ---
 
@@ -71,6 +88,7 @@ openai
 python-dotenv
 matplotlib
 seaborn
+imblearn
 ```
 
 Instale as dependências utilizando:
@@ -98,8 +116,14 @@ OPENAI_API_KEY="sua-chave-api"
 
 3. Execute a aplicação com Streamlit:
 
+- Para AutoML tradicional:
 ```bash
 streamlit run autoML.py
+```
+
+- Para Active Learning:
+```bash
+streamlit run streamlit_app.py
 ```
 
 ---
@@ -108,7 +132,7 @@ streamlit run autoML.py
 
 Após a execução, você obterá:
 
-- Uma interface gráfica interativa com resultados detalhados de todos os modelos testados.
+- Uma interface gráfica interativa com resultados detalhados.
 - Rankings automáticos baseados nas principais métricas de performance.
 - Relatórios automáticos gerados por IA (LangChain + OpenAI) com insights explicativos.
 - Recomendações práticas para gestores educacionais baseadas em análises quantitativas e qualitativas.
