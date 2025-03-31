@@ -1,6 +1,6 @@
 # 📊 AutoML e Active Learning para Predição de Evasão Escolar
 
-Este projeto oferece uma aplicação completa que combina aprendizado de máquina automatizado (AutoML) e aprendizado ativo (Active Learning) para prever evasão escolar. Desenvolvido com Python e integrado com Streamlit, o sistema utiliza técnicas avançadas de balanceamento, otimização de hiperparâmetros e análise de fairness, além de estratégias eficientes de aprendizado ativo para gerar insights claros e acionáveis.
+Este projeto implementa duas pipelines complementares que integram AutoML e aprendizado ativo (Active Learning) com o objetivo de prever a evasão escolar de forma automatizada, justa e explicável. Desenvolvido com Python e integrado com Streamlit, o sistema utiliza técnicas avançadas de balanceamento, otimização de hiperparâmetros e análise de fairness, além de estratégias eficientes de aprendizado ativo para gerar insights claros e acionáveis.
 
 ---
 
