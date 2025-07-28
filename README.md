@@ -121,7 +121,7 @@ streamlit run autoML.py
 
 - Para Active Learning:
 ```bash
-streamlit run streamlit_app.py
+streamlit run Active_learning_pipeline.py
 ```
 
 ---
