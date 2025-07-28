@@ -201,7 +201,7 @@ def train_and_evaluate_models(X_train, X_final_test, y_train, y_final_test, bala
             y_pred = best_model.predict(X_final_test)
             final_f1 = f1_score(y_final_test, y_pred, average='weighted', zero_division=1)
             accuracy = accuracy_score(y_final_test, y_pred)
-            recall_val = recall_score(y_final_test, y_pred, pos_label=1, zero_division=1)
+            recall_val = recall_score(y_final_test, y_pred, average='weighted', zero_division=1)
             precision_val = precision_score(y_final_test, y_pred, average='weighted', zero_division=1)
             kappa = cohen_kappa_score(y_final_test, y_pred)
             cv_f1_scores = cross_val_score(best_model, X_train, y_train, cv=skf, scoring='f1_weighted')
@@ -276,7 +276,6 @@ def plot_confusion_matrices(model, X_test, y_test):
     fig.tight_layout()
     return fig
 
-# Nova função para o modelo fair-aware
 def plot_confusion_matrices_fair(model, X_test, y_test, sensitive_features):
     y_pred = model.predict(X_test, sensitive_features=sensitive_features)
     cm = confusion_matrix(y_test, y_pred)
@@ -504,7 +503,7 @@ if data is not None:
         # Armazena o ranking no session_state para uso posterior na seção de fairness
         st.session_state.final_results_display = final_results_display
         
-        # Seleciona o melhor modelo com base no F1 score de validação
+        # Seleciona o melhor modelo com base no F1 Final Test
         best_row = final_results.loc[final_results['F1 Final Test'].idxmax()]
         best_model = best_row["trained_model"]
         st.session_state.best_model = best_model  # Armazena o modelo original para uso posterior
@@ -564,6 +563,17 @@ if data is not None:
             instance_idx=0
         )
         
+        # CALCULA MÉTRICAS DA CLASSE 1 PARA O MODELO ORIGINAL
+        y_pred_original = best_model.predict(X_test_scaled)
+        f1_class1_original = f1_score(y_test, y_pred_original, pos_label=1, average='binary', zero_division=1)
+        precision_class1_original = precision_score(y_test, y_pred_original, pos_label=1, average='binary', zero_division=1)
+        recall_class1_original = recall_score(y_test, y_pred_original, pos_label=1, average='binary', zero_division=1)
+        
+        st.write("### Métricas Específicas para a Classe 1 (Modelo Original)")
+        st.write(f"F1 Class1: {f1_class1_original:.4f}")
+        st.write(f"Precision Class1: {precision_class1_original:.4f}")
+        st.write(f"Recall Class1: {recall_class1_original:.4f}")
+        
         if protected_attrs:
             st.write("### Análise de Viés (Modelo Original)")
             for attr in protected_attrs:
@@ -576,7 +586,7 @@ if data is not None:
             ranking=final_results_display.to_string(index=False),
             prec_recall_description=prec_recall_description,
             conf_matrix_description=conf_matrix_description,
-            feature_importance="(Texto resumido da importância das features)",  # Ajuste conforme necessário
+            feature_importance="(Texto resumido da importância das features)",
             shap_description=shap_description,
             lime_description=lime_description
         )
@@ -587,27 +597,23 @@ if data is not None:
     if protected_attrs:
         apply_fairness = st.checkbox("Aplicar estratégia de fairness e exibir novos resultados (somente métricas com predict)")
         if apply_fairness:
-            # Verifica se o modelo e os dados necessários estão no session_state
             if "best_model" not in st.session_state or "final_results_display" not in st.session_state:
                 st.write("Primeiro, execute o AutoML para gerar o modelo e os resultados.")
             else:
                 st.write("### Aplicando estratégia de Fairness")
                 best_model_orig = st.session_state.best_model
-                # Mapeamento para ThresholdOptimizer
                 constraint_map = {
                     "DemographicParity": "demographic_parity",
                     "EqualizedOdds": "equalized_odds"
                 }
                 fairness_constraint = st.selectbox("Selecione a restrição de fairness:", ["DemographicParity", "EqualizedOdds"])
                 selected_constraint = constraint_map[fairness_constraint]
-                chosen_attr = protected_attrs[0]  # Usa o primeiro atributo protegido
-                # Recupera os sensitive features do conjunto de treinamento e teste a partir do session_state
+                chosen_attr = protected_attrs[0]
                 sensitive_feature_train = st.session_state.X_train_raw[chosen_attr].values
                 sensitive_feature_test = st.session_state.X_test_raw[chosen_attr].values
                 
                 st.write(f"Aplicando ThresholdOptimizer com restrição {fairness_constraint} usando o atributo {chosen_attr}...")
                 
-                # Cria o objeto de restrição para o ExponentiatedGradient
                 if fairness_constraint == "DemographicParity":
                     constraint_obj = DemographicParity()
                 else:
@@ -619,20 +625,28 @@ if data is not None:
                 best_model_fair = threshold_optimizer
                 st.write("Modelo fair-aware ajustado com ThresholdOptimizer.")
                 
-                # Realiza a predição passando os sensitive features
                 y_pred_new = best_model_fair.predict(X_test_scaled, sensitive_features=sensitive_feature_test)
                 new_accuracy = accuracy_score(y_test, y_pred_new)
+                # Cálculo das métricas gerais (weighted) já existentes:
                 new_precision = precision_score(y_test, y_pred_new, average='weighted', zero_division=1)
                 new_recall = recall_score(y_test, y_pred_new, pos_label=1, zero_division=1)
                 new_f1 = f1_score(y_test, y_pred_new, average='weighted', zero_division=1)
+                # Cálculo das métricas específicas para a classe 1:
+                new_f1_class1 = f1_score(y_test, y_pred_new, pos_label=1, average='binary', zero_division=1)
+                new_precision_class1 = precision_score(y_test, y_pred_new, pos_label=1, average='binary', zero_division=1)
+                new_recall_class1 = recall_score(y_test, y_pred_new, pos_label=1, average='binary', zero_division=1)
+                
                 st.write("## Resultados Após Fairness (usando predict)")
                 st.write(f"Acurácia: {new_accuracy:.4f}")
-                st.write(f"Precisão: {new_precision:.4f}")
-                st.write(f"Recall: {new_recall:.4f}")
-                st.write(f"F1 Score: {new_f1:.4f}")
+                st.write(f"Precisão (weighted): {new_precision:.4f}")
+                st.write(f"Recall (pos_label=1): {new_recall:.4f}")
+                st.write(f"F1 Score (weighted): {new_f1:.4f}")
+                st.write("### Métricas Específicas para a Classe 1 (Fairness)")
+                st.write(f"F1 Class1: {new_f1_class1:.4f}")
+                st.write(f"Precision Class1: {new_precision_class1:.4f}")
+                st.write(f"Recall Class1: {new_recall_class1:.4f}")
                 
                 st.write("### Nova Matriz de Confusão")
-                # Utiliza a nova função que passa sensitive_features
                 fig_cm_new = plot_confusion_matrices_fair(best_model_fair, X_test_scaled, y_test, sensitive_features=sensitive_feature_test)
                 st.pyplot(fig_cm_new)
                 
@@ -646,9 +660,9 @@ if data is not None:
                 final_results_display = st.session_state.final_results_display
                 insights_fair = generate_ai_insights(
                     ranking=final_results_display.to_string(index=False),
-                    prec_recall_description=f"Acurácia, Precisão, Recall e F1 após fairness: {new_accuracy:.4f}, {new_precision:.4f}, {new_recall:.4f}, {new_f1:.4f}",
+                    prec_recall_description=f"Acurácia, Precisão, Recall e F1 (weighted) após fairness: {new_accuracy:.4f}, {new_precision:.4f}, {new_recall:.4f}, {new_f1:.4f}",
                     conf_matrix_description=f"A nova matriz de confusão:\n{confusion_matrix(y_test, best_model_fair.predict(X_test_scaled, sensitive_features=sensitive_feature_test))}",
-                    feature_importance="(Texto resumido da importância das features após fairness)",  # Ajuste conforme necessário
+                    feature_importance="(Texto resumido da importância das features após fairness)",
                     shap_description="(Os resultados de SHAP não foram recalculados após fairness, pois predict_proba não está disponível)",
                     lime_description="(Os resultados de LIME não foram recalculados após fairness, pois predict_proba não está disponível)"
                 )
