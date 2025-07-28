@@ -26,8 +26,6 @@ Este projeto implementa duas pipelines complementares que integram AutoML e apre
   - XGBClassifier
   - LGBMClassifier
   - LogisticRegression
-  - SVC
-  - KNeighborsClassifier
   - DecisionTreeClassifier
 - **Avaliação de Desempenho:**
   - Curva ROC
